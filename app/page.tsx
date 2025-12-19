@@ -1,130 +1,141 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase'
+import { format, addDays, isSameDay } from 'date-fns' // The helper we installed
 
 export default function Home() {
   const [venues, setVenues] = useState<any[]>([])
+  const [user, setUser] = useState<any>(null)
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date()) // Default to Today
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const supabase = createClient()
 
-  // --- SECTION 1: THE ENGINE (Fetching Data) ---
+  // 1. Generate the 14-day array for the scroller
+  const days = Array.from({ length: 14 }, (_, i) => addDays(new Date(), i))
+
   useEffect(() => {
-    const fetchVenues = async () => {
-      // This pulls venues and their related slots from Supabase
-      const { data, error } = await supabase
-        .from('venues')
-        .select('*, slots(*)')
-      
-      if (error) {
-        console.error('Error fetching data:', error)
-      } else {
-        setVenues(data || [])
-      }
+    const fetchData = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+      const { data } = await supabase.from('venues').select('*, slots(*)')
+      if (data) setVenues(data)
     }
-    fetchVenues()
+    fetchData()
   }, [])
 
-  // --- SECTION 2: THE LOGIC (Booking Action) ---
   const handleBooking = async (venue: any) => {
-    if (!selectedSlotId) {
-      alert("Please select a time slot first!");
-      return;
-    }
+    if (!user) { window.location.href = '/login'; return }
+    if (!selectedSlotId) { alert("Select a time!"); return }
 
-    setLoading(true);
-    
+    setLoading(true)
     try {
-      // Sends the booking info to your app/api/checkout/route.ts
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           venueName: venue.name, 
           price: venue.price_per_hour,
-          slotId: selectedSlotId 
+          slotId: selectedSlotId,
+          userId: user.id 
         }),
-      });
-      
-      const data = await response.json();
-      
-      if (data.url) {
-        window.location.href = data.url; // The "Teleporter" to Stripe
-      } else {
-        alert("Stripe Error: " + data.error);
-      }
-    } catch (err) {
-      alert("Connection error. Is your terminal running?");
+      })
+      const data = await response.json()
+      if (data.url) window.location.href = data.url
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
-  // --- SECTION 3: THE DESIGN (The Website Look) ---
   return (
-    <main className="min-h-screen bg-slate-50 p-6 md:p-12">
-      {/* Header */}
-      <header className="max-w-6xl mx-auto text-center mb-16">
-        <h1 className="text-5xl font-black text-blue-800 tracking-tighter mb-3">
-          PitchUp
-        </h1>
-        <p className="text-slate-500 text-lg font-medium">
-          Ireland's simplest way to book your next match.
-        </p>
+    <main className="min-h-screen bg-slate-50 p-4 md:p-8 text-slate-900">
+      {/* HEADER */}
+      <header className="max-w-6xl mx-auto flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-black text-blue-600 tracking-tighter">PitchUp</h1>
+        {user ? (
+          <span className="text-xs font-bold bg-white px-3 py-1 rounded-full border border-slate-200">
+            {user.email}
+          </span>
+        ) : (
+          <a href="/login" className="text-sm font-bold text-blue-600 hover:underline">Login</a>
+        )}
       </header>
 
-      {/* Grid of Venues */}
+      {/* DATE SCROLLER */}
+      <div className="max-w-6xl mx-auto mb-10 overflow-x-auto pb-4 scrollbar-hide">
+        <div className="flex gap-3">
+          {days.map((day) => {
+            const isSelected = isSameDay(day, selectedDate)
+            return (
+              <button
+                key={day.toISOString()}
+                onClick={() => {
+                  setSelectedDate(day)
+                  setSelectedSlotId(null) // Reset selection when date changes
+                }}
+                className={`flex-shrink-0 w-20 py-4 rounded-2xl flex flex-col items-center transition-all border-2 ${
+                  isSelected 
+                  ? 'bg-blue-600 border-blue-600 text-white shadow-lg scale-105' 
+                  : 'bg-white border-slate-100 text-slate-500 hover:border-blue-200'
+                }`}
+              >
+                <span className="text-[10px] uppercase font-black opacity-60">{format(day, 'EEE')}</span>
+                <span className="text-xl font-black">{format(day, 'd')}</span>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* VENUE GRID */}
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {venues.map((venue) => (
-          <div key={venue.id} className="bg-white rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-100 flex flex-col overflow-hidden">
-            
-            {/* Top: Venue Info */}
+          <div key={venue.id} className="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/60 overflow-hidden flex flex-col border border-white">
             <div className="p-8">
-              <div className="text-5xl mb-4">{venue.image_emoji}</div>
-              <h2 className="text-2xl font-bold text-slate-900">{venue.name}</h2>
-              <p className="text-blue-600 font-bold text-sm uppercase tracking-wide">{venue.sport}</p>
+              <span className="text-4xl mb-2 block">{venue.image_emoji}</span>
+              <h2 className="text-2xl font-bold">{venue.name}</h2>
+              <p className="text-blue-600 font-bold text-[10px] uppercase tracking-widest">{venue.sport}</p>
             </div>
 
-            {/* Middle: Slot Selection */}
             <div className="px-8 py-6 bg-slate-50/50 flex-grow">
-              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Available Slots</h3>
-              <div className="flex flex-wrap gap-2">
+              <p className="text-[10px] font-black text-slate-400 uppercase mb-4">Available Times</p>
+              <div className="grid grid-cols-3 gap-2">
                 {venue.slots
-                  ?.sort((a: any, b: any) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
-                  .filter((slot: any) => !slot.is_booked)
+                  ?.filter((slot: any) => isSameDay(new Date(slot.slot_date), selectedDate))
+                  .sort((a: any, b: any) => a.start_time.localeCompare(b.start_time))
                   .map((slot: any) => {
-                    const time = new Date(slot.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                    const isSelected = selectedSlotId === slot.id;
-                    
+                    const time = new Date(slot.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                    const isBooked = slot.is_booked
+                    const isSelected = selectedSlotId === slot.id
+
                     return (
                       <button
                         key={slot.id}
+                        disabled={isBooked}
                         onClick={() => setSelectedSlotId(slot.id)}
-                        className={`px-4 py-2 rounded-xl text-sm font-bold transition-all border-2 ${
-                          isSelected 
-                          ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200 scale-105' 
-                          : 'bg-white border-slate-200 text-slate-600 hover:border-blue-400'
+                        className={`py-3 rounded-xl text-xs font-bold transition-all border-2 ${
+                          isBooked 
+                          ? 'bg-red-50 border-red-100 text-red-400 cursor-not-allowed opacity-60' 
+                          : isSelected 
+                          ? 'bg-green-600 border-green-600 text-white shadow-md' 
+                          : 'bg-white border-slate-100 text-slate-600 hover:border-green-400'
                         }`}
                       >
                         {time}
+                        {isBooked && <span className="block text-[8px] uppercase mt-1 opacity-60">Full</span>}
                       </button>
                     )
                   })}
               </div>
             </div>
 
-            {/* Bottom: Price and CTA */}
-            <div className="p-8 flex items-center justify-between bg-white border-t border-slate-50">
-              <div>
-                <span className="text-3xl font-black text-slate-900">€{venue.price_per_hour}</span>
-                <span className="text-slate-400 font-bold">/hr</span>
-              </div>
+            <div className="p-8 flex items-center justify-between">
+              <div className="text-2xl font-black">€{venue.price_per_hour}<span className="text-xs text-slate-400">/hr</span></div>
               <button 
                 onClick={() => handleBooking(venue)}
-                disabled={loading}
-                className="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black hover:bg-blue-700 transition-all active:scale-95 disabled:bg-slate-300 shadow-lg shadow-blue-100"
+                className="bg-blue-600 text-white px-8 py-4 rounded-2xl font-black hover:bg-blue-700 transition-all active:scale-95 disabled:bg-slate-200"
               >
-                {loading ? 'Wait...' : 'Book Now'}
+                Book Now
               </button>
             </div>
           </div>

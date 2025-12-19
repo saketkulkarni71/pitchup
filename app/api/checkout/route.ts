@@ -1,15 +1,23 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-// This connects to your "Secret Key" in .env.local
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  // apiVersion: '2023-10-16', // Or your specific version
+});
 
 export async function POST(req: Request) {
   try {
-    // 1. Get the booking info sent from the "Book Now" button
-    const { venueName, price, slotId } = await req.json();
+    const { venueName, price, slotId, userId } = await req.json();
 
-    // 2. Tell Stripe to create a payment page
+    // 1. Validation - check if we have what we need
+    if (!slotId || !userId) {
+      return NextResponse.json(
+        { error: 'Missing Slot ID or User ID' },
+        { status: 400 }
+      );
+    }
+
+    // 2. Create Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
@@ -17,25 +25,32 @@ export async function POST(req: Request) {
           price_data: {
             currency: 'eur',
             product_data: {
-              name: venueName,
+              name: `${venueName} - Padel Slot`,
+              description: `Booking for slot: ${slotId}`,
             },
-            unit_amount: price * 100, // Converts Euro to Cents
+            unit_amount: price * 100, // Stripe expects cents
           },
           quantity: 1,
         },
       ],
       mode: 'payment',
-      success_url: `${req.headers.get('origin')}/success`, // Where to go after paying
-      cancel_url: `${req.headers.get('origin')}/`,        // Where to go if they cancel
+      // This "metadata" is CRITICAL. 
+      // It tells Stripe to remember WHO booked WHAT so the webhook can update Supabase later.
       metadata: {
-        slotId: slotId, // Remembers WHICH slot they bought
+        slotId: slotId,
+        userId: userId,
       },
+      // Inside your Stripe session creation in route.ts:
+      success_url: `${req.headers.get('origin')}/success?slotId=${slotId}&userId=${userId}`,
+      cancel_url: `${req.headers.get('origin')}/`,
     });
 
-    // 3. Send the Stripe link back to the "Book Now" button
     return NextResponse.json({ url: session.url });
   } catch (err: any) {
-    // Corrected "catch" spelling here
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error('Stripe Error:', err);
+    return NextResponse.json(
+      { error: err.message },
+      { status: 500 }
+    );
   }
 }
