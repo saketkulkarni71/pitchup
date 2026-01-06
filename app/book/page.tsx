@@ -88,7 +88,7 @@ export default function BookPage() {
     const uniqueSports = ['All', ...Array.from(new Set(venues.map(v => v.sport)))];
 
     return (
-        <main className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-100">
+        <main className="min-h-screen bg-slate-50 text-slate-900 selection:bg-blue-100">
             <Header />
 
             <div className="p-4 md:p-8">

@@ -25,9 +25,9 @@ export default function Home() {
           {/* Hero Section */}
           <div className="mb-12">
             <h1 className="text-6xl md:text-8xl font-black text-slate-900 mb-6 tracking-tight leading-none">
-              Book Your
+              Your Next Game
               <span className="block bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
-                Perfect Pitch
+                on PitchUp
               </span>
             </h1>
             <p className="text-xl md:text-2xl text-slate-600 font-medium max-w-2xl mx-auto leading-relaxed">
