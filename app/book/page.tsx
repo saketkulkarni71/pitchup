@@ -62,10 +62,7 @@ export default function BookPage() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    venueName: venue.name,
-                    price: venue.price_per_hour,
                     slotId: selectedSlotId,
-                    userId: user.id
                 }),
             })
             const data = await response.json()

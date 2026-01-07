@@ -36,11 +36,10 @@ export default function MyBookings() {
     if (!confirm("Are you sure you want to cancel?")) return;
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
       const res = await fetch('/api/cancel', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bookingId, userId: user?.id })
+        body: JSON.stringify({ bookingId })
       })
 
       const data = await res.json()
