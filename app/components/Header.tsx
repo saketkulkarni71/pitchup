@@ -28,6 +28,11 @@ export default function Header() {
 
     const displayName = profile?.full_name || user?.email?.split('@')[0] || 'User'
 
+    const handleLogout = async () => {
+        await supabase.auth.signOut()
+        window.location.href = '/'
+    }
+
     return (
         <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
             <div className="max-w-6xl mx-auto px-4 md:px-8 h-20 flex justify-between items-center">
@@ -61,6 +66,12 @@ export default function Header() {
                             >
                                 {displayName}
                             </Link>
+                            <button
+                                onClick={handleLogout}
+                                className="text-xs font-bold text-slate-400 hover:text-red-500 transition-colors"
+                            >
+                                Logout
+                            </button>
                         </div>
                     ) : (
                         <Link
