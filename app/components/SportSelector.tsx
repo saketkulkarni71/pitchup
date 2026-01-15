@@ -11,7 +11,7 @@ interface Sport {
 interface SportSelectorProps {
     selectedSports: Sport[]
     onSportsChange: (sports: Sport[]) => void
-    onSave: () => void
+    onSave: (sports?: Sport[]) => void
 }
 
 export default function SportSelector({ selectedSports, onSportsChange, onSave }: SportSelectorProps) {
@@ -65,7 +65,7 @@ export default function SportSelector({ selectedSports, onSportsChange, onSave }
     const handleSave = () => {
         onSportsChange(tempSports)
         setIsEditing(false)
-        onSave()
+        onSave(tempSports)
     }
 
     const handleCancel = () => {
@@ -86,7 +86,10 @@ export default function SportSelector({ selectedSports, onSportsChange, onSave }
                     Choose up to 5 sports you play, ranked by preference
                 </p>
                 <button
-                    onClick={() => setIsEditing(true)}
+                    onClick={() => {
+                        setTempSports(selectedSports)
+                        setIsEditing(true)
+                    }}
                     className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
                 >
                     Add Sports
@@ -101,7 +104,10 @@ export default function SportSelector({ selectedSports, onSportsChange, onSave }
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-black text-slate-900">My Sports</h3>
                     <button
-                        onClick={() => setIsEditing(true)}
+                        onClick={() => {
+                            setTempSports(selectedSports)
+                            setIsEditing(true)
+                        }}
                         className="text-sm font-bold text-blue-600 hover:text-blue-700 transition-colors"
                     >
                         Edit
@@ -181,7 +187,7 @@ export default function SportSelector({ selectedSports, onSportsChange, onSave }
                             <button
                                 key={sport.name}
                                 onClick={() => handleAddSport(sport.name)}
-                                className="flex items-center gap-2 p-3 bg-white border-2 border-slate-200 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-all font-bold text-sm"
+                                className="flex items-center gap-2 p-3 bg-white border-2 border-slate-200 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-all font-bold text-sm text-slate-900"
                             >
                                 <span className="text-xl">{sport.emoji}</span>
                                 <span>{sport.name}</span>

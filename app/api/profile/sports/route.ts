@@ -30,33 +30,82 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Ranks must be between 1 and 5' }, { status: 400 })
         }
 
-        // Delete existing sports for this user
+        // Strategy: Wipe and Re-insert (with Profile Restoration)
+        // This avoids unique constraint collisions on rank swapping and CHECK constraints on temp values.
+
+        // 1. Delete ALL existing sports for this user
+        // (Cascading delete will remove sport_profiles, so we must rely on incoming data or fetch backup)
+        // The frontend sends the full 'sports' object including 'sport_profiles', so we use that.
+
         await supabase
             .from('player_sports')
             .delete()
             .eq('player_id', user.id)
 
-        // Insert new sports
-        const sportsToInsert = sports.map(s => ({
+        // 2. Prepare inserts
+        const sportsToInsert = sports.map((s: any) => ({
             player_id: user.id,
             sport_name: s.sport_name,
             rank: s.rank
         }))
 
-        const { data, error } = await supabase
+        // 3. Insert Sports
+        const { data: insertedSports, error: insertError } = await supabase
             .from('player_sports')
             .insert(sportsToInsert)
             .select()
 
-        if (error) {
-            console.error('Sports insert error:', error)
-            return NextResponse.json({ error: 'Failed to update sports' }, { status: 500 })
+        if (insertError) {
+            console.error('Sports insert error:', insertError)
+            return NextResponse.json({ error: 'Failed to save sports configuration' }, { status: 500 })
         }
 
-        return NextResponse.json({ sports: data })
+        // 4. Restore/Migrate Sport Profiles
+        // Map the NEW player_sport_id to the OLD profile data
+        const profilesToInsert: any[] = []
+
+        if (insertedSports) {
+            for (const newSport of insertedSports) {
+                // Find original data for this sport
+                // The input 'sports' array has the 'sport_profiles' nested array if it was fetched from DB
+                const originalSport = sports.find((s: any) => s.sport_name === newSport.sport_name)
+
+                // If we have profile data, prepare it for insertion with NEW ID
+                if (originalSport && originalSport.sport_profiles && originalSport.sport_profiles.length > 0) {
+                    const profileData = originalSport.sport_profiles[0]
+                    const { id, player_sport_id, created_at, updated_at, ...cleanProfile } = profileData
+
+                    profilesToInsert.push({
+                        ...cleanProfile,
+                        player_sport_id: newSport.id,
+                        updated_at: new Date().toISOString()
+                    })
+                }
+            }
+
+            if (profilesToInsert.length > 0) {
+                const { error: profileError } = await supabase
+                    .from('sport_profiles')
+                    .insert(profilesToInsert)
+
+                if (profileError) {
+                    // Log but don't fail the request entirely (sports are saved)
+                    console.error('Profile restoration error:', profileError)
+                }
+            }
+        }
+
+        // 5. Return fresh data
+        const { data: finalData } = await supabase
+            .from('player_sports')
+            .select('*, sport_profiles(*)')
+            .eq('player_id', user.id)
+            .order('rank', { ascending: true })
+
+        return NextResponse.json({ sports: finalData })
     } catch (error: any) {
         console.error('Sports update error:', error)
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+        return NextResponse.json({ error: `Internal error: ${error.message}` }, { status: 500 })
     }
 }
 

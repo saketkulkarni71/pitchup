@@ -180,7 +180,7 @@ export default function SportProfileForm({
                     <select
                         value={formData.years_playing}
                         onChange={(e) => setFormData({ ...formData, years_playing: e.target.value })}
-                        className="w-full p-3 bg-white border-2 border-slate-200 rounded-xl font-bold focus:border-blue-500 focus:outline-none"
+                        className="w-full p-3 bg-white border-2 border-slate-200 rounded-xl font-bold text-slate-900 focus:border-blue-500 focus:outline-none"
                         required
                     >
                         <option value="">Select...</option>
@@ -197,7 +197,7 @@ export default function SportProfileForm({
                     <select
                         value={formData.playing_frequency}
                         onChange={(e) => setFormData({ ...formData, playing_frequency: e.target.value })}
-                        className="w-full p-3 bg-white border-2 border-slate-200 rounded-xl font-bold focus:border-blue-500 focus:outline-none"
+                        className="w-full p-3 bg-white border-2 border-slate-200 rounded-xl font-bold text-slate-900 focus:border-blue-500 focus:outline-none"
                         required
                     >
                         <option value="">Select...</option>
@@ -214,7 +214,7 @@ export default function SportProfileForm({
                     <select
                         value={formData.competitive_background}
                         onChange={(e) => setFormData({ ...formData, competitive_background: e.target.value })}
-                        className="w-full p-3 bg-white border-2 border-slate-200 rounded-xl font-bold focus:border-blue-500 focus:outline-none"
+                        className="w-full p-3 bg-white border-2 border-slate-200 rounded-xl font-bold text-slate-900 focus:border-blue-500 focus:outline-none"
                         required
                     >
                         <option value="">Select...</option>
@@ -238,7 +238,7 @@ export default function SportProfileForm({
                     <select
                         value={formData.intensity_preference}
                         onChange={(e) => setFormData({ ...formData, intensity_preference: e.target.value })}
-                        className="w-full p-3 bg-white border-2 border-slate-200 rounded-xl font-bold focus:border-blue-500 focus:outline-none"
+                        className="w-full p-3 bg-white border-2 border-slate-200 rounded-xl font-bold text-slate-900 focus:border-blue-500 focus:outline-none"
                         required
                     >
                         <option value="">Select...</option>
@@ -256,7 +256,7 @@ export default function SportProfileForm({
                         <select
                             value={formData.preferred_role}
                             onChange={(e) => setFormData({ ...formData, preferred_role: e.target.value })}
-                            className="w-full p-3 bg-white border-2 border-slate-200 rounded-xl font-bold focus:border-blue-500 focus:outline-none"
+                            className="w-full p-3 bg-white border-2 border-slate-200 rounded-xl font-bold text-slate-900 focus:border-blue-500 focus:outline-none"
                         >
                             <option value="">Select...</option>
                             {sportConfig.roles.map(role => (
@@ -273,7 +273,7 @@ export default function SportProfileForm({
                     <select
                         value={formData.team_preference}
                         onChange={(e) => setFormData({ ...formData, team_preference: e.target.value })}
-                        className="w-full p-3 bg-white border-2 border-slate-200 rounded-xl font-bold focus:border-blue-500 focus:outline-none"
+                        className="w-full p-3 bg-white border-2 border-slate-200 rounded-xl font-bold text-slate-900 focus:border-blue-500 focus:outline-none"
                         required
                     >
                         <option value="">Select...</option>
@@ -312,7 +312,7 @@ export default function SportProfileForm({
                             <select
                                 value={formData.physical_traits[trait.label] || ''}
                                 onChange={(e) => handlePhysicalTraitChange(trait.label, e.target.value)}
-                                className="w-full p-3 bg-white border-2 border-slate-200 rounded-xl font-bold focus:border-blue-500 focus:outline-none"
+                                className="w-full p-3 bg-white border-2 border-slate-200 rounded-xl font-bold text-slate-900 focus:border-blue-500 focus:outline-none"
                             >
                                 <option value="">Select...</option>
                                 {trait.options.map(option => (

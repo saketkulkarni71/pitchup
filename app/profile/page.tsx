@@ -20,6 +20,7 @@ export default function Profile() {
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [message, setMessage] = useState('')
+    const [isEditingBasicInfo, setIsEditingBasicInfo] = useState(false)
 
     const supabase = createClient()
 
@@ -190,91 +191,138 @@ export default function Profile() {
                     )}
                 </div>
 
-                {/* Basic Info Section */}
+                {/* Basic Information Section */}
                 <section id="basic-info" className="bg-white rounded-[2rem] shadow-sm border border-slate-100 p-8 mb-8">
-                    <h2 className="text-2xl font-black text-slate-900 mb-6">Basic Information</h2>
-
-                    <form onSubmit={updateBasicInfo} className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-xs font-bold uppercase text-slate-400 mb-2">
-                                    Email
-                                </label>
-                                <input
-                                    type="text"
-                                    value={user?.email || ''}
-                                    disabled
-                                    className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 text-slate-500 font-bold"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold uppercase text-slate-400 mb-2">
-                                    Username
-                                </label>
-                                <input
-                                    type="text"
-                                    value={profile?.username || ''}
-                                    onChange={(e) => setProfile({ ...profile, username: e.target.value })}
-                                    className="w-full p-4 bg-white rounded-xl border-2 border-slate-200 text-slate-900 font-bold focus:border-blue-500 focus:outline-none transition-colors"
-                                    placeholder="Choose a username"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold uppercase text-slate-400 mb-2">
-                                    Display Name
-                                </label>
-                                <input
-                                    type="text"
-                                    value={profile?.display_name || ''}
-                                    onChange={(e) => setProfile({ ...profile, display_name: e.target.value })}
-                                    className="w-full p-4 bg-white rounded-xl border-2 border-slate-200 text-slate-900 font-bold focus:border-blue-500 focus:outline-none transition-colors"
-                                    placeholder="Your display name"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold uppercase text-slate-400 mb-2">
-                                    City / Area
-                                </label>
-                                <input
-                                    type="text"
-                                    value={profile?.city || ''}
-                                    onChange={(e) => setProfile({ ...profile, city: e.target.value })}
-                                    className="w-full p-4 bg-white rounded-xl border-2 border-slate-200 text-slate-900 font-bold focus:border-blue-500 focus:outline-none transition-colors"
-                                    placeholder="Your city"
-                                />
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-bold uppercase text-slate-400 mb-2">
-                                Bio
-                            </label>
-                            <textarea
-                                value={profile?.bio || ''}
-                                onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                                className="w-full p-4 bg-white rounded-xl border-2 border-slate-200 text-slate-900 font-bold focus:border-blue-500 focus:outline-none transition-colors resize-none"
-                                placeholder="Tell us about yourself..."
-                                rows={3}
-                            />
-                        </div>
-
-                        <button
-                            type="submit"
-                            disabled={saving}
-                            className="w-full md:w-auto bg-slate-900 text-white font-bold py-4 px-8 rounded-xl hover:bg-slate-800 transition-all disabled:opacity-50 shadow-lg shadow-slate-200"
-                        >
-                            {saving ? 'Saving...' : 'Update Information'}
-                        </button>
-
-                        {message && (
-                            <p className={`text-sm font-bold ${message.includes('success') ? 'text-green-600' : 'text-red-600'}`}>
-                                {message}
-                            </p>
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-2xl font-black text-slate-900">Basic Information</h2>
+                        {!isEditingBasicInfo && (
+                            <button
+                                onClick={() => setIsEditingBasicInfo(true)}
+                                className="text-sm font-bold text-blue-600 hover:text-blue-700 transition-colors"
+                            >
+                                Edit
+                            </button>
                         )}
-                    </form>
+                    </div>
+
+                    {!isEditingBasicInfo ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
+                            <div>
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Display Name</span>
+                                <span className="font-bold text-slate-900 text-lg block">{profile?.display_name || '-'}</span>
+                            </div>
+                            <div>
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Username</span>
+                                <span className="font-bold text-slate-900 text-lg block">@{profile?.username || '-'}</span>
+                            </div>
+                            <div>
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Email</span>
+                                <span className="font-bold text-slate-900 text-lg block">{user?.email}</span>
+                            </div>
+                            <div>
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">City / Area</span>
+                                <span className="font-bold text-slate-900 text-lg block">{profile?.city || '-'}</span>
+                            </div>
+                            <div className="md:col-span-2">
+                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Bio</span>
+                                <p className="font-medium text-slate-700">{profile?.bio || 'No bio added yet.'}</p>
+                            </div>
+                        </div>
+                    ) : (
+                        <form onSubmit={async (e) => {
+                            await updateBasicInfo(e)
+                            setIsEditingBasicInfo(false)
+                        }} className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-slate-400 mb-2">
+                                        Email
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={user?.email || ''}
+                                        disabled
+                                        className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 text-slate-500 font-bold"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-slate-400 mb-2">
+                                        Username
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={profile?.username || ''}
+                                        onChange={(e) => setProfile({ ...profile, username: e.target.value })}
+                                        className="w-full p-4 bg-white rounded-xl border-2 border-slate-200 text-slate-900 font-bold focus:border-blue-500 focus:outline-none transition-colors"
+                                        placeholder="Choose a username"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-slate-400 mb-2">
+                                        Display Name
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={profile?.display_name || ''}
+                                        onChange={(e) => setProfile({ ...profile, display_name: e.target.value })}
+                                        className="w-full p-4 bg-white rounded-xl border-2 border-slate-200 text-slate-900 font-bold focus:border-blue-500 focus:outline-none transition-colors"
+                                        placeholder="Your display name"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold uppercase text-slate-400 mb-2">
+                                        City / Area
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={profile?.city || ''}
+                                        onChange={(e) => setProfile({ ...profile, city: e.target.value })}
+                                        className="w-full p-4 bg-white rounded-xl border-2 border-slate-200 text-slate-900 font-bold focus:border-blue-500 focus:outline-none transition-colors"
+                                        placeholder="Your city"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold uppercase text-slate-400 mb-2">
+                                    Bio
+                                </label>
+                                <textarea
+                                    value={profile?.bio || ''}
+                                    onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+                                    className="w-full p-4 bg-white rounded-xl border-2 border-slate-200 text-slate-900 font-bold focus:border-blue-500 focus:outline-none transition-colors resize-none"
+                                    placeholder="Tell us about yourself..."
+                                    rows={3}
+                                />
+                            </div>
+
+                            <div className="flex gap-3">
+                                <button
+                                    type="submit"
+                                    disabled={saving}
+                                    className="flex-grow md:flex-grow-0 bg-slate-900 text-white font-bold py-4 px-8 rounded-xl hover:bg-slate-800 transition-all disabled:opacity-50 shadow-lg shadow-slate-200"
+                                >
+                                    {saving ? 'Saving...' : 'Save Changes'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsEditingBasicInfo(false)}
+                                    className="flex-grow md:flex-grow-0 bg-slate-100 text-slate-700 font-bold py-4 px-8 rounded-xl hover:bg-slate-200 transition-all"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+
+                            {message && (
+                                <p className={`text-sm font-bold ${message.includes('success') ? 'text-green-600' : 'text-red-600'}`}>
+                                    {message}
+                                </p>
+                            )}
+                        </form>
+                    )}
                 </section>
 
                 {/* Sports & Interests Section */}
